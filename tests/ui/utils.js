@@ -20,7 +20,7 @@ export async function customLoginAPI(request, username, password) {
   const sessionId = response.headers()['set-cookie'];
 
   expect(response).toBeOK();
-  console.log(response)
+  console.log(response);
   return {
     'formToken' : formToken,
     'cookieToken' : cookie,
@@ -28,10 +28,9 @@ export async function customLoginAPI(request, username, password) {
   }
 }
 
-export async function addToCart(request, productId, count) {
-  const tokens = await customLoginAPI(request); 
+export async function addToCart(request, productId, count, tokens) {
   //await new Promise(resolve => setTimeout(resolve, 2000));
-  const response = await request.post('https://enotes.pointschool.ru/basket/create', {
+  const response = await request.post('/basket/create', {
     headers: {
       'Accept': 'application/json, text/javascript, */*; q=0.01',
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -42,27 +41,6 @@ export async function addToCart(request, productId, count) {
     form: {
       'product': productId,
       'count': count
-    } 
-  })
-
-  
-  console.log(response);
-}
-
-export async function addToCartAPI(request, productId, count) {
-  //const tokens = await customLoginAPI(request); пизда
-  //await new Promise(resolve => setTimeout(resolve, 2000));
-  const response = await request.post('https://enotes.pointschool.ru/basket/create', {
-    headers: {
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': '_csrf=1c0ffff45ebacbd99f91419885580025548231b91dbe749104cb267b48c80b5ba%3A2%3A%7Bi%3A0%3Bs%3A5%3A%22_csrf%22%3Bi%3A1%3Bs%3A32%3A%22gnn37szipyue0m-6bZNXGAQGgOaE87jQ%22%3B%7D',
-      'x-csrf-token': 'umZuw8SmKFLei8aTJSgdyhOpfwDzuFDJ8VqCV6OCWKrdCADw89VSO67ys_YVRTD8cfMxWLT5AY6WFeMSm7Uy-w==',
-      'x-requested-with': 'XMLHttpRequest'
-    },
-    form: {
-      'product': '4',
-      'count': '1'
     } 
   })
 
@@ -124,8 +102,18 @@ export async function checkDiscountCheckBox(page) {
     await expect(discountCheckBox).toBeChecked();
 }
 
-export async function getDiscountedProductCount(page) {
-    await checkDiscountCheckBox(page);
-    return await getTotalProductCount(page);
+export async function sortOutProducts(initialLoadData) {
+    let discountedProducts = [];
+    let normalProducts = [];
+
+    for (const product of initialLoadData.products) {
+      
+      if (product.discount > 0){
+        discountedProducts.push(product);
+      } else {
+        normalProducts.push(product);
+      }
+    }
+    return [discountedProducts, normalProducts];
 }
 

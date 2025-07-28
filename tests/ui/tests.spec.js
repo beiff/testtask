@@ -1,22 +1,41 @@
 import { test, expect } from '@playwright/test';
-import { clearCart, openCart, switchPage, customLoginAPI, addToCart } from './utils';
-let token = '';
+import { clearCart, openCart, switchPage, customLoginAPI, sortOutProducts } from './utils';
+let currentPageProductData = {};
+let currentPageDiscountedProducts = [];
+let currentPageNormalProducts = [];
 
-// test.beforeEach('Логин', async ({ page, baseURL }) =>{
-//   const login = 'test';
-//   const password = 'test';
+test.beforeEach('Логин', async ({ page, baseURL }) =>{
+  const login = 'test';
+  const password = 'test';
 
-//   await page.goto('/login');
-//   const loginField = page.getByPlaceholder('Логин клиента');
-//   const passwordField = page.getByPlaceholder('Пароль клиента');
+  await page.goto('/login');
+  const loginField = page.getByPlaceholder('Логин клиента');
+  const passwordField = page.getByPlaceholder('Пароль клиента');
   
-//   await loginField.fill(login);
-//   await passwordField.pressSequentially(password);
+  await loginField.fill(login);
+  await passwordField.pressSequentially(password);
 
-//   await page.locator('//*[@id="login-form"]/div[4]/button').click();
-//   await page.waitForURL(baseURL); // or use regex: /\/dashboard/
-//   await expect(page).toHaveURL(baseURL);
-// })
+
+  const responsePromise = page.waitForResponse(
+    response => 
+      response.url().includes('/product/get') &&
+      response.status() === 200
+  );
+
+  await page.locator('//*[@id="login-form"]/div[4]/button').click();
+  await page.waitForURL(baseURL); 
+
+  const response = await responsePromise;
+
+  currentPageProductData = await response.json()
+
+  console.log(currentPageProductData);
+
+  currentPageDiscountedProducts = (await sortOutProducts(currentPageProductData))[0];
+  currentPageNormalProducts = (await sortOutProducts(currentPageProductData))[1];
+
+  await expect(page).toHaveURL(baseURL);
+})
 
 // test.afterEach('Очистка корзины после теста', async ({ page }) =>{
 //   await clearCart(page);
@@ -50,6 +69,8 @@ test('TC-2. Переход в корзину с 1 неакционным тов�
 
   for (const product of productCards) {
   const child = product.locator('div[class*="note-item"]');
+
+  
   const classList = await child.getAttribute('class');
   if (classList && classList.includes('hasDiscount')) {
     continue;
@@ -222,21 +243,17 @@ console.log(notebookName + ' ' + notebookPrice);
   //await expect(page.locator('//*[@id="basketContainer"]/div[2]/ul/li[1]/span[2]')).toHaveText(' - ' + notebookPrice);
   await expect(page.locator('//*[@id="basketContainer"]/div[2]/ul/li[1]/span[3]')).toHaveText('9');
 
-
-
-
   await page.locator('a:has-text("Перейти в корзину")').click();
   await page.waitForURL('/basket');
   await expect(page).toHaveURL('/basket');
-
-  //await page.waitForTimeout(30000);
 
 });
 
 
 
-test.only('тесты', async ({ request, baseURL }) => {
-  //await addToCart(request, 4, 1);
-  await customLoginAPI(request, 'test', 'test');
+test.only('тесты', async ({ page, request, baseURL }) => { //тест для тестирования тестов
+  
+
+
 });
 
