@@ -51,6 +51,27 @@ export async function addProductsToCart(count, products, page){
   }
 
 
+export async function addIdenticalProductsToCart(count, product, page){
+    const productCards = page.locator('.note-list.row');
+    const initialCount = await page.locator('.basket-count-items').innerText();
+
+    
+    console.log(product.name);
+    const productLabel = productCards.locator('.product_name.h6.mb-auto').filter({ hasText: product.name }).first();
+
+    const card = await productLabel.locator('xpath=/..');
+    await card.locator('input[name="product-enter-count"]').fill(String(count));
+    await card.getByRole('button').click();
+
+    await page.waitForResponse(response => 
+    response.url().includes('/basket/get') && response.status() === 200
+    )
+    const updatedCount = page.locator('.basket-count-items');
+    await expect(updatedCount).toHaveText(String(Number(count) + Number(initialCount)), {timeout : 5000});
+  }
+
+
+
 export async function clearCart(page) {
     const cart = page.locator('#dropdownBasket');
     await cart.click();
