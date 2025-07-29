@@ -28,25 +28,27 @@ export async function customLoginAPI(request, username, password) {
   }
 }
 
-export async function addToCart(request, productId, count, tokens) {
-  //await new Promise(resolve => setTimeout(resolve, 2000));
-  const response = await request.post('/basket/create', {
-    headers: {
-      'Accept': 'application/json, text/javascript, */*; q=0.01',
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Cookie': tokens['sessionId'] + '; ' + tokens['cookieToken'],
-      'x-csrf-token': tokens['formToken'],
-      'x-requested-with': 'XMLHttpRequest'
-    },
-    form: {
-      'product': productId,
-      'count': count
-    } 
-  })
+export async function addProductsToCart(count, products, page){
+    const productCards = page.locator('.note-list.row');
+    const initialCount = await page.locator('.basket-count-items').innerText();
 
-  
-  console.log(response);
-}
+    for (let i = 0; i < count; i++) {
+      if (i >= products.length - 1) {
+        break;
+      }
+      const product = products[i];
+      console.log(product.name);
+      const productLabel = productCards.locator('.product_name.h6.mb-auto').filter({ hasText: product.name }).first();
+
+      await productLabel.locator('xpath=/..').getByRole('button').click();
+      await page.waitForResponse(response => 
+      response.url().includes('/basket/get') && response.status() === 200
+      )
+      const updatedCount = page.locator('.basket-count-items');
+      await expect(updatedCount).toHaveText(String(i + 1 + Number(initialCount)), {timeout : 5000});
+    }
+
+  }
 
 
 export async function clearCart(page) {

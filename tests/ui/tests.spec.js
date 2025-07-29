@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { clearCart, openCart, switchPage, customLoginAPI, sortOutProducts } from './utils';
+import { clearCart, openCart, switchPage, addProductsToCart, sortOutProducts } from './utils';
 let currentPageProductData = {};
 let currentPageDiscountedProducts = [];
 let currentPageNormalProducts = [];
@@ -56,28 +56,16 @@ test.fail('TC-1. Переход в пустую корзину', async ({ page }
   await expect(page).toHaveURL('/basket');
 });
 
-test('TC-2. Переход в корзину с 1 неакционным товаром', async ({ page }) => {
+test.only('TC-2. Переход в корзину с 1 неакционным товаром', async ({ page }) => {
   const count = await page.locator('.basket-count-items').innerText();
   if (count != '0') {
       await clearCart(page);
   }
 
-  const productCards = page.locator('.note-list.row');
-
   const notebookName = currentPageNormalProducts[0].name;
   const notebookPrice = currentPageNormalProducts[0].price;
 
-
-  const firstProductLabel = await productCards.locator('.product_name.h6.mb-auto').filter({ hasText: notebookName }).first();
-  
-  console.log(await firstProductLabel.allTextContents());
-  await firstProductLabel.locator('xpath=/..').getByRole('button').click();
-  await page.waitForResponse(response => 
-    response.url().includes('/basket/get') && response.status() === 200
-  )  
-  
-  const updatedCount = page.locator('.basket-count-items');
-  await expect(updatedCount).toHaveText('1', {timeout : 5000});
+  addProductsToCart(1, currentPageNormalProducts, page)
 
   await openCart(page);
   await expect(page.locator('//*[@id="basketContainer"]/div[2]')).toHaveClass(/(^|\s)show(\s|$)/, {timeout : 5000});
@@ -233,8 +221,8 @@ console.log(notebookName + ' ' + notebookPrice);
 
 
 test('тесты', async ({ page, request, baseURL }) => { //тест для тестирования тестов
-  
-
+  await clearCart(page);
+  await addProductsToCart(2, currentPageNormalProducts, page)
   
   //const firstProduct = firstProductLabel.locator('xpath=/..');
   //await firstProduct.getByRole('button').click();
