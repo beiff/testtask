@@ -29,15 +29,15 @@ export async function customLoginAPI(request, username, password) {
 }
 
 export async function addProductsToCart(count, products, page){
-    const productCards = page.locator('.note-list.row');
+    const productCards = await page.locator('.note-list.row');
     const initialCount = await page.locator('.basket-count-items').innerText();
+    console.log('initial count - ' + initialCount);
 
     for (let i = 0; i < count; i++) {
       if (i >= products.length - 1) {
         break;
       }
       const product = products[i];
-      console.log(product.name);
       const productLabel = productCards.locator('.product_name.h6.mb-auto').filter({ hasText: product.name }).first();
 
       await productLabel.locator('xpath=/..').getByRole('button').click();
@@ -45,6 +45,7 @@ export async function addProductsToCart(count, products, page){
       response.url().includes('/basket/get') && response.status() === 200
       )
       const updatedCount = page.locator('.basket-count-items');
+          console.log('updated count - ' + (await updatedCount.innerText()) + '\n---------------');
       await expect(updatedCount).toHaveText(String(i + 1 + Number(initialCount)), {timeout : 5000});
     }
 
@@ -101,28 +102,7 @@ export async function switchPage(page, targetPage) {
             break;
         }
   }
-}
-
-export async function getTotalProductCount(page) {
-    const pageCount = (await page.locator('.page-link').all()).length;
-    //console.log(pageCount);
-    let totalProductCount = (pageCount - 1) * 8;
-  
-    await switchPage(page, pageCount);
-    //await page.waitForTimeout(5000);
-    const productCards = await page.locator('.note-list.row >> .col-3.mb-5').all();
-    //console.log(totalProductCount);
-    const firstCard = page.locator('.note-list.row >> .col-3.mb-5').first();
-    //console.log(await firstCard.innerText());
-    totalProductCount += productCards.length;
-    //console.log(totalProductCount);
-    return totalProductCount;
-}
-
-export async function checkDiscountCheckBox(page) {
-    const discountCheckBox = await page.locator('#gridCheck');
-    await discountCheckBox.check();
-    await expect(discountCheckBox).toBeChecked();
+  return page;
 }
 
 export async function sortOutProducts(initialLoadData) {
