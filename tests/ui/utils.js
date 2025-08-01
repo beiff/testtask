@@ -29,25 +29,36 @@ export async function customLoginAPI(request, username, password) {
 }
 
 export async function addProductsToCart(count, products, page){
+    let totalPrice = 0;
+    let totalDiscount = 0;
+
     const productCards = await page.locator('.note-list.row');
     const initialCount = await page.locator('.basket-count-items').innerText();
-    console.log('initial count - ' + initialCount);
+    //console.log('initial count - ' + initialCount);
 
     for (let i = 0; i < count; i++) {
       if (i >= products.length - 1) {
         break;
       }
       const product = products[i];
+      totalPrice += Number(product.price);
+      totalDiscount += Number(product.discount);
       const productLabel = productCards.locator('.product_name.h6.mb-auto').filter({ hasText: product.name }).first();
 
       await productLabel.locator('xpath=/..').getByRole('button').click();
       await page.waitForResponse(response => 
       response.url().includes('/basket/get') && response.status() === 200
       )
+
+      
+      //console.log('\n(' + totalPrice + ') ' +  product.name + ': ' + product.price + ' - ' + product.discount)
+
+
       const updatedCount = page.locator('.basket-count-items');
-          console.log('updated count - ' + (await updatedCount.innerText()) + '\n---------------');
+         // console.log('updated count - ' + (await updatedCount.innerText()) + '\n---------------');
       await expect(updatedCount).toHaveText(String(i + 1 + Number(initialCount)), {timeout : 5000});
     }
+    return (totalPrice - totalDiscount);
 
   }
 
@@ -71,10 +82,8 @@ export async function addIdenticalProductsToCart(count, product, page){
     await expect(updatedCount).toHaveText(String(Number(count) + Number(initialCount)), {timeout : 5000});
   }
 
-
-
 export async function clearCart(page) {
-    const cart = page.locator('#dropdownBasket');
+    const cart = await page.locator('#dropdownBasket');
     await cart.click();
     
     await expect(page.locator('//*[@id="basketContainer"]/div[2]')).toHaveClass(/(^|\s)show(\s|$)/, {timeout : 5000});
@@ -86,7 +95,7 @@ export async function clearCart(page) {
 }
 
 export async function openCart(page) {
-    const cart = page.locator('#dropdownBasket');
+    const cart = await page.locator('#dropdownBasket');
     await cart.click();
     await expect(page.locator('//*[@id="basketContainer"]/div[2]')).toHaveClass(/(^|\s)show(\s|$)/, {timeout : 5000});
 }

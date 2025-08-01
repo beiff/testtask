@@ -15,21 +15,21 @@ test.beforeEach('Логин', async ({ page, baseURL }) =>{
   await loginField.fill(login);
   await passwordField.pressSequentially(password);
 
-
   const responsePromise = page.waitForResponse(
     response => 
       response.url().includes('/product/get') &&
       response.status() === 200
   );
 
-  await page.locator('//*[@id="login-form"]/div[4]/button').click();
+  //await page.locator('//*[@id="login-form"]/div[4]/button').click();
+  await page.getByRole('button', { name: 'Вход' }).click();
   await page.waitForURL(baseURL); 
 
   const response = await responsePromise;
 
   currentPageProductData = await response.json()
 
-  console.log(currentPageProductData);
+  //console.log(currentPageProductData);
 
   currentPageDiscountedProducts = (await sortOutProducts(currentPageProductData))[0];
   currentPageNormalProducts = (await sortOutProducts(currentPageProductData))[1];
@@ -41,7 +41,7 @@ test.beforeEach('Логин', async ({ page, baseURL }) =>{
 //   await clearCart(page);
 // })
 
-test.fail('TC-1. Переход в пустую корзину', async ({ page }) => {
+test('TC-1. Переход в пустую корзину', async ({ page }) => {
 
   const count = await page.locator('.basket-count-items').innerText(); // смотрим сколько товаров в корзине на начало теста
 
@@ -56,7 +56,8 @@ test.fail('TC-1. Переход в пустую корзину', async ({ page }
   await expect(page).toHaveURL('/basket');
 });
 
-test('TC-2. Переход в корзину с 1 неакционным товаром', async ({ page }) => {
+test('TC-2. Переход в корзину с 1 неакционным товаром', async ({ page, browser }) => {
+
   const count = await page.locator('.basket-count-items').innerText();
   if (count != '0') {
       await clearCart(page);
@@ -92,6 +93,8 @@ test('TC-3. Переход в корзину с 1 акционным товар�
 
   await addProductsToCart(1, currentPageDiscountedProducts, page)
 
+//-------------------
+
   await openCart(page);
   await expect(page.locator('//*[@id="basketContainer"]/div[2]')).toHaveClass(/(^|\s)show(\s|$)/, {timeout : 5000});
 
@@ -104,9 +107,11 @@ test('TC-3. Переход в корзину с 1 акционным товар�
   await expect(page).toHaveURL('/basket');
 });
 
-test.fail('TC-4. Переход в корзину с 9 разными товарами', async ({ page }) => {
+test.only('TC-4. Переход в корзину с 9 разными товарами', async ({ page }) => {
 
   const count = await page.locator('.basket-count-items').innerText();
+
+  let totalPrice = 0;
 
   if (count != '0') {
       await clearCart(page);
@@ -115,8 +120,11 @@ test.fail('TC-4. Переход в корзину с 9 разными товар
 
 //--------------------------------------------------------------------
 
-  await addProductsToCart(4, currentPageNormalProducts, page);
-  await addProductsToCart(3, currentPageDiscountedProducts, page);
+  totalPrice += await addProductsToCart(4, currentPageNormalProducts, page);
+  console.log('\nTotal = ' + totalPrice);
+    
+  totalPrice += await addProductsToCart(3, currentPageDiscountedProducts, page);
+  console.log('\nTotal = ' + totalPrice);
 
   const responsePromise = page.waitForResponse(
     response => 
@@ -132,7 +140,8 @@ test.fail('TC-4. Переход в корзину с 9 разными товар
   currentPageDiscountedProducts = (await sortOutProducts(currentPageProductData))[0];
   currentPageNormalProducts = (await sortOutProducts(currentPageProductData))[1];
 
-  await addProductsToCart(2, currentPageNormalProducts, page);
+  totalPrice += await addProductsToCart(3, currentPageNormalProducts, page);
+  console.log('\nTotal = ' + totalPrice);
 
   await openCart(page);
   await expect(page.locator('//*[@id="basketContainer"]/div[2]')).toHaveClass(/(^|\s)show(\s|$)/, {timeout : 5000});
@@ -144,7 +153,6 @@ test.fail('TC-4. Переход в корзину с 9 разными товар
   await page.locator('a:has-text("Перейти в корзину")').click();
   await page.waitForURL('/basket');
   await expect(page).toHaveURL('/basket');
-
 });
 
 test('TC-5. Переход в корзину с 9 акционными товарами одного наименования', async ({ page, baseURL }) => {
@@ -169,6 +177,7 @@ test('TC-5. Переход в корзину с 9 акционными това�
   await expect(page.locator('//*[@id="basketContainer"]/div[2]/ul/li[1]/span[1]')).toHaveText(notebookName);
   await expect(page.locator('//*[@id="basketContainer"]/div[2]/ul/li[1]/span[2]')).toHaveText(' - ' + notebookPrice + ' р.');
   await expect(page.locator('//*[@id="basketContainer"]/div[2]/ul/li[1]/span[3]')).toHaveText(String(targetCount));
+  await expect(page.locator('.basket_price')).toHaveText(String(notebookPrice));
 
   await page.locator('a:has-text("Перейти в корзину")').click();
   await page.waitForURL('/basket');
@@ -177,9 +186,9 @@ test('TC-5. Переход в корзину с 9 акционными това�
 
 
 
-test('тесты', async ({ page, request, baseURL }) => { //тест для тестирования тестов
+test.skip('тесты', async ({ page, request, baseURL }) => { //тест для тестирования тестов
 
-    await addIdenticalProductsToCart(6, currentPageNormalProducts[1], page);
+   // await addIdenticalProductsToCart(6, currentPageNormalProducts[1], page);
     
   
   //const firstProduct = firstProductLabel.locator('xpath=/..');
